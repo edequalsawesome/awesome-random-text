@@ -66,27 +66,48 @@ awesome_random_text_register();
 foreach (
 	array(
 		'core/paragraph'    => '<p>Saved fallback</p>',
-		'core/heading'      => '<h2>Saved fallback</h2>',
+		'core/heading'      => '<h3>Saved fallback</h3>',
 		'core/list-item'    => '<li>Saved fallback</li>',
 		'core/verse'        => '<pre class="wp-block-verse">Saved fallback</pre>',
 		'core/preformatted' => '<pre class="wp-block-preformatted">Saved fallback</pre>',
 	) as $name => $fallback_content
 ) {
+	$attributes = $binding;
+	if ( 'core/heading' === $name ) {
+		$attributes['level'] = 3;
+	}
+	$rendered = do_blocks( awesome_random_text_block( $name, $attributes, $fallback_content ) );
+	preg_match( '/^<([a-z0-9]+)/', $fallback_content, $matches );
+	$tag = $matches[1];
 	awesome_random_text_assert(
-		false !== strpos( do_blocks( awesome_random_text_block( $name, $binding, $fallback_content ) ), 'Bound text' ),
-		$name . ' did not render its bound plain-text choice.'
+		1 === preg_match( '/<' . $tag . '\b[^>]*>Bound text<\/' . $tag . '>/', $rendered ),
+		$name . ' must render its bound choice inside its original ' . $tag . ' wrapper.'
 	);
 }
 
-$button_binding                                  = $binding;
+$button_binding                               = $binding;
 $button_binding['metadata']['bindings']['text'] = $button_binding['metadata']['bindings']['content'];
 unset( $button_binding['metadata']['bindings']['content'] );
+$button = do_blocks(
+	awesome_random_text_block(
+		'core/button',
+		$button_binding,
+		'<div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button custom-button" href="https://example.com/destination">Saved fallback</a></div>'
+	)
+);
+$button_tags = new WP_HTML_Tag_Processor( $button );
 awesome_random_text_assert(
-	false !== strpos(
-		do_blocks( awesome_random_text_block( 'core/button', $button_binding, '<div class="wp-block-button"><a class="wp-block-button__link wp-element-button">Saved fallback</a></div>' ) ),
-		'Bound text'
-	),
-	'core/button did not render its bound text choice.'
+	$button_tags->next_tag( 'DIV' ) && $button_tags->has_class( 'wp-block-button' ) && $button_tags->has_class( 'is-style-outline' ),
+	'core/button must retain its wrapper and style classes.'
+);
+awesome_random_text_assert(
+	$button_tags->next_tag( 'A' )
+	&& 'https://example.com/destination' === $button_tags->get_attribute( 'href' )
+	&& $button_tags->has_class( 'wp-block-button__link' )
+	&& $button_tags->has_class( 'wp-element-button' )
+	&& $button_tags->has_class( 'custom-button' )
+	&& 1 === preg_match( '/<a\b[^>]*>Bound text<\/a>/', $button ),
+	'core/button must replace only its text while retaining the anchor URL and classes.'
 );
 
 $empty_binding = $binding;
