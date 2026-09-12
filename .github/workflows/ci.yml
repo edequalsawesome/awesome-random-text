@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          tools: composer
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - run: composer lint
+      - run: npm run lint:js
+      - run: npm run test:js -- --runInBand
+      - run: php -d zend.assertions=1 -d assert.exception=1 tests/php/source-test.php
+      - run: npm run build
+      - run: npm run test:playground
+      - run: npm run plugin-zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: awesome-random-text
+          path: awesome-random-text.zip

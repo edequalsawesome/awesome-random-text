@@ -1,0 +1,12 @@
+{
+	"landingPage": "/",
+	"steps": [
+		{
+			"step": "runPHP",
+			"code": {
+				"filename": "awesome-random-text-integration.php",
+				"content": "<?php require '/wordpress/wp-content/plugins/awesome-random-text/tests/integration/playground.php';"
+			}
+		}
+	]
+}

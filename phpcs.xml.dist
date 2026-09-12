@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ruleset name="Awesome Random Text">
+	<rule ref="WordPress-Core" />
+	<rule ref="WordPress-Docs" />
+	<file>awesome-random-text.php</file>
+	<exclude-pattern>vendor/*</exclude-pattern>
+</ruleset>
